@@ -13,23 +13,23 @@ import com.webcohesion.enunciate.api.resources.ResourceApi;
 import com.webcohesion.enunciate.api.resources.ResourceGroup;
 
 public class Endpoint {
-  private Resource resource;
+  private List<Resource> resources;
   private ResourceApi resourceApi;
   private ResourceGroup resourceGroup;
   private PathSummary pathSummary;
   private List<Operation> operations = new ArrayList<>();
 
-  public Endpoint(EnunciateLogger logger, Resource resource, ResourceApi resourceApi, ResourceGroup resourceGroup, PathSummary pathSummary) {
-    this.resource = resource;
+  public Endpoint(EnunciateLogger logger, List<Resource> resources, ResourceApi resourceApi, ResourceGroup resourceGroup, PathSummary pathSummary) {
+    this.resources = resources;
     this.resourceApi = resourceApi;
     this.resourceGroup = resourceGroup;
     this.pathSummary = pathSummary;
     
-    
-    for (Method m : resource.getMethods()) {
-      operations.add(new Operation(logger, m, resourceGroup));
-    }
-    
+    for (Resource resource : resources) {
+      for (Method m : resource.getMethods()) {
+        operations.add(new Operation(logger, m, resourceGroup));
+      }
+    }    
   }
 
   public String getPath() {

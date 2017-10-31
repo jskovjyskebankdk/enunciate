@@ -47,6 +47,14 @@ public class FindBestDataTypeMethod extends Typed1ArgTemplateMethod<DataTypeRefe
     return findBestDataType(entity.getMediaTypes());
   }
 
+  public static MediaAndType findBestMediaAndType(Entity entity) {
+    if (entity == null) {
+      return null;
+    }
+
+    return findBestMediaAndType(entity.getMediaTypes());
+  }
+
   public static DataTypeReference findBestDataType(List<? extends MediaTypeDescriptor> mediaTypes) {
     MediaAndType bestMediaType = findBestMediaAndType(mediaTypes);
     if (bestMediaType == null) {

@@ -27,14 +27,17 @@ public class Operation {
   private final Method method;
   private final List<Param> parameters = new ArrayList<>();
   private final List<Response> responses = new ArrayList<>();
+  private EntityRenderer entityRenderer;
 
   public Operation(EnunciateLogger logger, Method method, ResourceGroup resourceGroup) {
     this.method = method;
     this.resourceGroup = resourceGroup;
+    entityRenderer = new EntityRenderer(method);
     
     for (Parameter parameter : method.getParameters()) {
       parameters.add(new Param(logger, parameter));
     }
+    
     computeResponses(logger);
   }
 
@@ -66,6 +69,24 @@ public class Operation {
     return parameters;
   }
   
+  public boolean getHasEntity() {
+    return method.getRequestEntity() != null;
+  }
+
+  public String getIsEntityRequired() {
+    // TODO: this is probably a bad assumption
+    return Boolean.TRUE.toString();
+  }
+  
+  public String getEntityDescription() {
+    String description = method.getRequestEntity().getDescription();
+    return safeYamlString(description == null ? "" : description);
+  }
+  
+  public EntityRenderer getRenderEntity() {
+    return entityRenderer;
+  }
+  
   public List<Response> getResponses() {
     return responses;
   }
@@ -86,7 +107,7 @@ public class Operation {
         dataType = dataType == null && successResponse ? successDataType : dataType;
         List<Parameter> headers = successResponse ? successHeaders : Collections.<Parameter>emptyList();
         
-        String mediaType = mediaAndType == null ? "*/*" : mediaAndType.media.getMediaType();
+        String mediaType = mediaAndType == null ? DUMMY_SUCCESS_MEDIA_TYPE : mediaAndType.media.getMediaType();
         responses.add(new Response(logger, code.getCode(), mediaType, dataType, headers, code.getCondition()));
         successResponseFound |= successResponse;
       }

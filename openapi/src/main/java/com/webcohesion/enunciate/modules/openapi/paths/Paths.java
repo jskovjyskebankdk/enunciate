@@ -25,21 +25,22 @@ public class Paths {
     for (ResourceApi resourceApi : resourceApis) {
       for (ResourceGroup resourceGroup : resourceApi.getResourceGroups()) {
         for (PathSummary pathSummary : resourceGroup.getPaths()) {
-          Resource resource = findResourceForPath(resourceGroup, pathSummary.getPath());
+          List<Resource> resources = findResourcesForPath(resourceGroup, pathSummary.getPath());
           
-          endpoints.add(new Endpoint(logger, resource, resourceApi, resourceGroup, pathSummary));
+          endpoints.add(new Endpoint(logger, resources, resourceApi, resourceGroup, pathSummary));
         }
       }
     }
   }
   
-  private Resource findResourceForPath(ResourceGroup group, String path) {
+  private List<Resource> findResourcesForPath(ResourceGroup group, String path) {
+    List<Resource> resources = new ArrayList<>();
     for (Resource r : group.getResources()) {
       if (r.getPath().equals(path)) {
-        return r;
+        resources.add(r);
       }
     }
-    throw new IllegalStateException("Failed to find resource for path " + path);
+    return resources;
   }
 
   public boolean getIsEmpty() {

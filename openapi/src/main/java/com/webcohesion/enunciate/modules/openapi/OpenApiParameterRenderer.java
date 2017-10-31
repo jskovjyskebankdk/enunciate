@@ -25,6 +25,8 @@ public class OpenApiParameterRenderer extends Typed1ArgTemplateMethod<String, St
     addOptionalEnum(ip);
     addType(ip);
     
+    // FIXME: render entity argument
+    
     return ip.toString();
   }
 

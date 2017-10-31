@@ -92,7 +92,7 @@ public class DataTypeReferenceRenderer {
     ip.add("format: ", format);
   }
 
-  private static void renderObsoletedFileFormat(IndententationPrinter ip) {
+  public static void renderObsoletedFileFormat(IndententationPrinter ip) {
     ip.add("type: string");
     ip.add("format: binary"); // TODO: Need to check type for base64/binary - assume binary for now
   }

@@ -65,6 +65,13 @@ paths:
           ${parameter.renderDataType("          ")}
         [/#list][#-- list parameters --]
       [/#if][#-- if operation.hasParameters --]
+      [#if operation.hasEntity]
+      requestBody:
+        description: ${operation.entityDescription}
+        required: ${operation.isEntityRequired}
+        content:
+          ${operation.renderEntity("          ")}
+      [/#if][#-- if operation.hasEntity --]
       responses:
         [#list operation.responses as response]
         ${response.code}:
