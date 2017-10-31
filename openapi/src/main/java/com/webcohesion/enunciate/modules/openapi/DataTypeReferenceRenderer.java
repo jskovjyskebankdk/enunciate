@@ -13,13 +13,18 @@ public class DataTypeReferenceRenderer {
   private DataTypeReferenceRenderer() {}
   
   public static void render(IndententationPrinter ip, DataTypeReference dtr, String description) {
+    if (dtr == null) {
+      return;
+    }
+    
+    if (description != null && !description.isEmpty()) {
+      ip.add("description: ", description);
+    }
+
     DataType value = dtr.getValue();
     List<ContainerType> containers = dtr.getContainers();
     if (value != null) {
       if (containers != null && !containers.isEmpty()) {
-        if (description != null && !description.isEmpty()) {
-          ip.add("description: ", description);
-        }
         for (ContainerType ct : containers) {
           if (!ct.isMap()) {
             ip.add("type: array");
@@ -37,9 +42,6 @@ public class DataTypeReferenceRenderer {
       }
     } else {
       if (containers != null && !containers.isEmpty()) {
-        if (description != null && !description.isEmpty()) {
-          ip.add("description: ", description);
-        }
         for (ContainerType ct : containers) {
           if (!ct.isMap()) {
             ip.add("type: array");
@@ -52,29 +54,62 @@ public class DataTypeReferenceRenderer {
           ip.add("type: ", getBaseType(dtr));
           ip.prevLevel();
         }
-      } else if (getFormatNameFor(dtr) != null) {
-        if (description != null && !description.isEmpty()) {
-          ip.add("description: ", description);
-        }
-        ip.add("type: ", getBaseType(dtr));
-        ip.add("format: ", getFormatNameFor(dtr));
       } else {
-        if (description != null && !description.isEmpty()) {
-          ip.add("description: ", description);
-        }
-        
-        if (dtr.getBaseType() == BaseType.object) {
-          ip.add("type: string");
-          ip.add("format: binary"); // TODO: Need to check type for base64/binary - assume binary for now
-        } else {
-          ip.add("type: ", getBaseType(dtr));
-        }
+        renderSimpleType(ip, dtr);
       }
     }
   }
 
+  private static void renderSimpleType(IndententationPrinter ip, DataTypeReference dtr) {
+    String baseType = getBaseType(dtr);
+    String format = getFormatNameFor(dtr);
+    if (format != null) {
+      renderBaseTypeWithFormat(ip, baseType, format);
+    } else {
+      if (dtr.getBaseType() == BaseType.object) {
+        renderObsoletedFileFormat(ip);
+      } else {
+        renderBaseType(ip, baseType);
+      }
+    }
+  }
+
+  public static void renderBaseType(IndententationPrinter ip, String baseType) {
+    ip.add("type: ", baseType);
+  }
+
+  public static void renderBaseTypeWithOptFormat(IndententationPrinter ip, String baseType, BaseTypeFormat format) {
+    if (format != null) {
+      String fomatStr = BaseTypeToOpenApiType.toSwaggerFormat(format);
+      renderBaseTypeWithFormat(ip, baseType, fomatStr);
+    } else {
+      renderBaseType(ip, baseType);
+    }
+  }
+
+  private static void renderBaseTypeWithFormat(IndententationPrinter ip, String baseType, String format) {
+    renderBaseType(ip, baseType);
+    ip.add("format: ", format);
+  }
+
+  private static void renderObsoletedFileFormat(IndententationPrinter ip) {
+    ip.add("type: string");
+    ip.add("format: binary"); // TODO: Need to check type for base64/binary - assume binary for now
+  }
+
   private static void addSchemaRef(IndententationPrinter ip, DataType value) {
-    ip.add("$ref: \"#/components/schemas/" + value.getSlug() + "\"");
+    addSchemaSlugReference(ip, value.getSlug());
+  }
+
+  public static void addSchemaRef(IndententationPrinter ip, DataTypeReference ref) {
+    String slug = ref.getSlug();
+    if (slug != null && !slug.isEmpty()) {
+      addSchemaSlugReference(ip, slug);
+    }
+  }
+
+  private static void addSchemaSlugReference(IndententationPrinter ip, String slug) {
+    ip.add("$ref: \"#/components/schemas/" + slug + "\"");
   }
 
   private static String getFormatNameFor(DataTypeReference dtr) { 

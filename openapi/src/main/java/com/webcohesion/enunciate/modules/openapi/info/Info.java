@@ -34,7 +34,7 @@ public class Info {
   
   public String getDescription() {
     String projectDescription = configuration.readDescription(context, true, DefaultJavaDocTagHandler.INSTANCE);
-    return safeYamlString(projectDescription);
+    return safeYamlString(projectDescription == null ? "" : projectDescription);
   }
   
   public String getTermsOfService() {

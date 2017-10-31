@@ -23,7 +23,7 @@ public class Param {
     return safeYamlString(parameter.getName());
   }
 
-  public String getTypeLabel() {
+  public String getInFormat() {
     return type.toYamlString();
   }
   

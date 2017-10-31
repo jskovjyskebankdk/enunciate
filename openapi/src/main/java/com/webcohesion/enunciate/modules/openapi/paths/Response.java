@@ -6,18 +6,17 @@ import java.util.List;
 
 import com.webcohesion.enunciate.EnunciateLogger;
 import com.webcohesion.enunciate.api.datatype.DataTypeReference;
-import com.webcohesion.enunciate.api.resources.MediaTypeDescriptor;
 import com.webcohesion.enunciate.api.resources.Parameter;
 import com.webcohesion.enunciate.modules.openapi.OpenApiDataTypeRenderer;
 import com.webcohesion.enunciate.modules.openapi.yaml.YamlHelper;
 
 public class Response {
+  @SuppressWarnings("unused") private final EnunciateLogger logger;
   private final int code;
   private final String mediaType;
   private final DataTypeReference dataType;
   private final List<Parameter> headers;
   private final String description;
-  private final EnunciateLogger logger;
   private final OpenApiDataTypeRenderer renderer;
 
   public Response(EnunciateLogger logger, int code, String mediaType, DataTypeReference dataType, List<Parameter> headers, String description) {

@@ -1,81 +1,49 @@
 package com.webcohesion.enunciate.modules.openapi;
 
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Set;
 
 import com.webcohesion.enunciate.EnunciateLogger;
 import com.webcohesion.enunciate.api.resources.Parameter;
 import com.webcohesion.enunciate.modules.freemarker.Typed1ArgTemplateMethod;
+import com.webcohesion.enunciate.modules.openapi.yaml.IndententationPrinter;
 
 public class OpenApiParameterRenderer extends Typed1ArgTemplateMethod<String, String> {
-  private final EnunciateLogger logger;
+  @SuppressWarnings("unused") private final EnunciateLogger logger;
   private final Parameter parameter;
-  private final OpenApiParameterTypes type;
 
   public OpenApiParameterRenderer(EnunciateLogger logger, Parameter parameter, OpenApiParameterTypes type) {
     super(String.class);
     this.logger = logger;
     this.parameter = parameter;
-    this.type = type;
   }
 
   @Override
-  protected String exec(String newlineIndents) {
-    String nextLineIndent = "FIXME>"+newlineIndents+"<";
+  protected String exec(String nextLineIndent) {
+    IndententationPrinter ip = new IndententationPrinter(nextLineIndent);
+
+    addOptionalEnum(ip);
+    addType(ip);
     
-    List<String> lines = renderLines();
-    
-    Iterator<String> ix = lines.iterator();
-    StringBuilder sb = new StringBuilder(ix.next());
-    while (ix.hasNext()) {
-      sb.append(System.lineSeparator()).append(nextLineIndent);
-      sb.append(ix.next());
-    }
-    
-    return sb.toString();
+    return ip.toString();
   }
-  
-  private List<String> renderLines() {
-    if (isEnum()) {
-      return enums();
-    }
-    
+
+  private void addType(IndententationPrinter ip) {
     if (parameter.isMultivalued()) {
-      return arrays();
+      ip.add("type: array");
+      ip.add("items:");
+      ip.nextLevel();
+      DataTypeReferenceRenderer.renderBaseTypeWithOptFormat(ip, parameter.getTypeName(), parameter.getTypeFormat());
+      ip.prevLevel();
+    } else {
+      DataTypeReferenceRenderer.renderBaseTypeWithOptFormat(ip, parameter.getTypeName(), parameter.getTypeFormat());
     }
-    
-    List<String> lines = new ArrayList<>();
-    lines.add("type: " + parameter.getTypeName());
-    if (getTypeFormatName() != null) {
-      lines.add("format: " + getTypeFormatName());
-    }
-    return lines;
   }
 
-  private String getTypeFormatName() {
-    return BaseTypeToOpenApiType.toSwaggerFormat(parameter.getTypeFormat());
-  }
-
-  private boolean isEnum() {
-    return parameter.getConstraintValues() != null;
-  }
-
-  private List<String> enums() {
-    List<String> lines = new ArrayList<>();
-    lines.add("type: string");
-    lines.add("enum:");
-    for (String i : parameter.getConstraintValues()) {
-      lines.add("- " + i);
+  private void addOptionalEnum(IndententationPrinter ip) {
+    Set<String> constraintValues = parameter.getConstraintValues();
+    if (constraintValues != null && !constraintValues.isEmpty()) {
+      ObjectTypeRenderer.renderEnum(ip, new ArrayList<>(constraintValues));
     }
-    return lines;
-  }
-  
-  private List<String> arrays() {
-    List<String> lines = new ArrayList<>();
-    lines.add("type: array");
-    lines.add("items:");
-    lines.add("- FIXME");
-    return lines;
   }
 }

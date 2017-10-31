@@ -58,7 +58,7 @@ paths:
       parameters:
         [#list operation.parameters as parameter]
       - name: ${parameter.name}
-        in: ${parameter.typeLabel}
+        in: ${parameter.inFormat}
         description: ${parameter.description}
         required: ${parameter.required}
         schema:

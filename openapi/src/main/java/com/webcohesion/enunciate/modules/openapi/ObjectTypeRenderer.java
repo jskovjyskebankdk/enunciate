@@ -1,5 +1,8 @@
 package com.webcohesion.enunciate.modules.openapi;
 
+import static com.webcohesion.enunciate.modules.openapi.yaml.YamlHelper.safeYamlString;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.validation.constraints.DecimalMax;
@@ -10,6 +13,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import com.webcohesion.enunciate.api.datatype.DataType;
+import com.webcohesion.enunciate.api.datatype.DataTypeReference;
 import com.webcohesion.enunciate.api.datatype.DataTypeReference.ContainerType;
 import com.webcohesion.enunciate.api.datatype.Namespace;
 import com.webcohesion.enunciate.api.datatype.Property;
@@ -21,17 +25,60 @@ public class ObjectTypeRenderer {
   private ObjectTypeRenderer() {}
   
   public static void render(IndententationPrinter ip, DataType datatype) {
-    ip.nextLevel();
+    ip.pushNextLevel();
+    ip.add("title: ", safeYamlString(datatype.getLabel()));
+    addOptionalSupertypeHeader(ip, datatype);
+
     ip.add("type: ", getBaseType(datatype));
-    // TODO: title
-    // TODO: required
-    // TODO: supertypes
-    
+    addOptionalRequired(ip, datatype);
     addOptionalProperties(ip, datatype);
-    addOptionalXml(ip, datatype);
     addOptionalEnum(ip, datatype);
+    addOptionalXml(ip, datatype);
     
     // TODO: example
+    
+    ip.popLevel();
+  }
+
+  private static void addOptionalSupertypeHeader(IndententationPrinter ip, DataType datatype) {
+    List<DataTypeReference> supertypes = datatype.getSupertypes();
+    if (supertypes == null || supertypes.isEmpty()) {
+      return;
+    }
+    
+    ip.add("allOf:");
+    ip.nextLevel();
+    ip.itemFollows();
+
+    DataTypeReference superType = supertypes.iterator().next();
+    DataTypeReferenceRenderer.addSchemaRef(ip, superType);
+
+    ip.itemFollows();
+  }
+
+  private static void addOptionalRequired(IndententationPrinter ip, DataType datatype) {
+    List<? extends Property> properties = datatype.getProperties();
+    if (properties == null) {
+      return;
+    }
+    
+    List<Property> requiredProperties = new ArrayList<>();
+    for (Property p : properties) {
+      if (p.isRequired()) {
+        requiredProperties.add(p);
+      }
+    }
+    
+    if (requiredProperties.isEmpty()) {
+      return;
+    }
+    
+    ip.add("required:");
+    ip.nextLevel();
+    for (Property p : requiredProperties) {
+      ip.item(p.getName());
+    }
+    ip.prevLevel();
   }
 
   private static String getBaseType(DataType datatype) {
@@ -49,14 +96,24 @@ public class ObjectTypeRenderer {
   
   private static void addOptionalEnum(IndententationPrinter ip, DataType datatype) {
     List<? extends Value> values = datatype.getValues();
-    if (values != null && !values.isEmpty()) {
-      ip.add("enum:");
-      ip.nextLevel();
-      for (Value v : values) {
-        ip.add("- ", v.getValue());
-      }
-      ip.prevLevel();
+    if (values == null || values.isEmpty()) {
+      return;
     }
+    
+    List<String> enums = new ArrayList<>();
+    for (Value v: values) {
+      enums.add(v.getValue());
+    }
+    renderEnum(ip, enums);
+  }
+
+  public static void renderEnum(IndententationPrinter ip, List<String> values) {
+    ip.add("enum:");
+    ip.nextLevel();
+    for (String e : values) {
+      ip.item(e);
+    }
+    ip.prevLevel();
   }
 
   private static void addOptionalProperties(IndententationPrinter ip, DataType datatype) {

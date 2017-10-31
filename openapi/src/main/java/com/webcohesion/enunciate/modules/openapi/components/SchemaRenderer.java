@@ -13,7 +13,7 @@ import com.webcohesion.enunciate.modules.openapi.yaml.IndententationPrinter;
 public class SchemaRenderer extends Typed1ArgTemplateMethod<String, String> {
   private static final Pattern VALID_REF_ID_PATTERN = Pattern.compile("^[a-zA-Z0-9\\.\\-_]+$");
   
-  private final EnunciateLogger logger;
+  @SuppressWarnings("unused") private final EnunciateLogger logger;
   private final DataType datatype;
 
   public SchemaRenderer(EnunciateLogger logger, DataType datatype) {
@@ -31,7 +31,6 @@ public class SchemaRenderer extends Typed1ArgTemplateMethod<String, String> {
   
   private void renderLines(IndententationPrinter ip) {
     ip.add(getRefId() + ":");
-    
     ObjectTypeRenderer.render(ip, datatype);
   }
 

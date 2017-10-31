@@ -10,7 +10,8 @@ public enum OpenApiParameterTypes {
   QUERY,
   HEADER,
   PATH,
-  COOKIE;
+  COOKIE,
+  UNKNOWN_FIXME;
   
   public static OpenApiParameterTypes fromEnunciateTypeLabel(String typeLabel) {
     String type = typeLabel.toLowerCase();
@@ -22,6 +23,9 @@ public enum OpenApiParameterTypes {
     }
     if (type.contains("header")) {
       return OpenApiParameterTypes.HEADER;
+    }
+    if (type.contains("matrix")) {
+      return OpenApiParameterTypes.UNKNOWN_FIXME;
     }
     throw new IllegalStateException("Unmapped typeLabel " + typeLabel);
   }

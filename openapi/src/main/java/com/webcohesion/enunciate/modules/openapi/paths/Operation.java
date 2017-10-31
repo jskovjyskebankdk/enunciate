@@ -39,7 +39,7 @@ public class Operation {
   }
 
   public String getHttpMethod() {
-    return safeYamlString(method.getHttpMethod().toLowerCase());
+    return method.getHttpMethod().toLowerCase();
   }
   
   public String getDescription() {
@@ -82,11 +82,12 @@ public class Operation {
         
         MediaAndType mediaAndType = FindBestDataTypeMethod.findBestMediaAndType(code.getMediaTypes());
         
-        DataTypeReference dataType = mediaAndType.type;
+        DataTypeReference dataType = mediaAndType == null ? null : mediaAndType.type;
         dataType = dataType == null && successResponse ? successDataType : dataType;
         List<Parameter> headers = successResponse ? successHeaders : Collections.<Parameter>emptyList();
         
-        responses.add(new Response(logger, code.getCode(), mediaAndType.media.getMediaType(), dataType, headers, code.getCondition()));
+        String mediaType = mediaAndType == null ? "*/*" : mediaAndType.media.getMediaType();
+        responses.add(new Response(logger, code.getCode(), mediaType, dataType, headers, code.getCondition()));
         successResponseFound |= successResponse;
       }
     }
