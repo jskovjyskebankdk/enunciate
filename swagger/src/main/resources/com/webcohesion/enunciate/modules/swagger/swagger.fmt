@@ -124,7 +124,7 @@
           "properties" : {
           [#list dataType.properties as property]
             "${property.name}" : {
-            [#if property.namespaceInfo??]
+            [#if property.metadata??]
               "xml" : {
               [#if property.wrapperName??]
                 "name" : "${property.wrapperName}",

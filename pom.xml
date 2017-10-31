@@ -55,6 +55,7 @@
     <module>javascript-client</module>
     <module>gwt-json-overlay</module>
     <module>swagger</module>
+    <module>openapi</module>
     <module>docs</module>
 
     <module>slim-maven-plugin</module>

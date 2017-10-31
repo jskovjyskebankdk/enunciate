@@ -1,0 +1,47 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
+defaultTasks "jar"
+
+group = 'com.webcohesion.enunciate'
+version = '2.10.0-SNAPSHOT'
+
+description = """Enunciate - OpenAPI Module"""
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
+}
+
+configurations.all {
+}
+
+repositories {
+	maven {
+      	url System.getenv("NEXUS_REPO_URL")
+    }
+	maven {
+	    url "file://c:/udvikler/ws/.m2-repository"
+        name "MavenRepo"
+	}
+}
+dependencies {
+    compile group: 'com.webcohesion.enunciate', name: 'enunciate-core', version:'2.10.0-SNAPSHOT'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.5.3'
+    compile group: 'org.freemarker', name: 'freemarker', version:'2.3.23'
+    testCompile group: 'junit', name: 'junit', version:'4.12'
+}
+
+task packSwaggerUi(type: Zip) {
+	from "swagger-ui"
+	archiveName = "swagger-ui.zip"
+} 
+
+jar {
+	destinationDir = file("c:/udvikler/ws/.m2-repository/com/webcohesion/enunciate/enunciate-openapi/2.10.0-SNAPSHOT")
+	from ("src/main/java") {
+		include "**/*.ftl"
+	}
+	from packSwaggerUi
+}
