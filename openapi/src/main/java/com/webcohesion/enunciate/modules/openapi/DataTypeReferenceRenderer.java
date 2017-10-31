@@ -14,7 +14,7 @@ public class DataTypeReferenceRenderer {
   
   public static void render(IndententationPrinter ip, DataTypeReference dtr, String description) {
     if (dtr == null) {
-      return;
+      throw new IllegalStateException("Cannot render null data type");
     }
     
     if (description != null && !description.isEmpty()) {

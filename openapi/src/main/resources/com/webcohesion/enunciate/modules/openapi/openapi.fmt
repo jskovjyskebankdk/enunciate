@@ -76,10 +76,12 @@ paths:
         [#list operation.responses as response]
         ${response.code}:
           description: ${response.description}
+          [#if response.hasData]
           content:
             ${response.mediaType}:
               schema:
                 ${response.renderDataType("                ")}
+          [/#if][#-- response.hasData --]
 [/#list] [#-- list responses --]
             [/#list][#-- list operations --]
         [/#list][#-- list endpoints --]

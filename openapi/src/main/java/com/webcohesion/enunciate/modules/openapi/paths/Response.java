@@ -27,6 +27,8 @@ public class Response {
     this.headers = headers;
     this.description = YamlHelper.safeYamlString(description);
     renderer = new OpenApiDataTypeRenderer(logger, dataType, description);
+    
+    // TODO: Render headers
   }
 
   public String getCode() {
@@ -39,6 +41,10 @@ public class Response {
 
   public String getMediaType() {
     return safeYamlString(mediaType);
+  }
+  
+  public boolean getHasData() {
+    return dataType != null;
   }
   
   public OpenApiDataTypeRenderer getRenderDataType() {
