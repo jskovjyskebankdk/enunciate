@@ -61,8 +61,7 @@ public class PropertyImpl implements Property {
     return this.accessor.isAttribute() ? "attribute" : this.accessor.isValue() ? "(value)" : "element";
   }
 
-  @Override
-  public PropertyMetadata getMetadata() {
+  public PropertyMetadata getNamespaceInfo() {
     return new PropertyMetadata(getNamespacePrefix(), getNamespace(), null);
   }
 
@@ -147,7 +146,6 @@ public class PropertyImpl implements Property {
     return description;
   }
 
-  @Override
   public boolean isAttribute() {
     return this.accessor.isAttribute();
   }

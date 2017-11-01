@@ -69,6 +69,4 @@ public interface DataType extends HasStyles, HasAnnotations, HasFacets {
   JavaDoc getJavaDoc();
 
   Element getJavaElement();
-  
-  String getXmlName();
 }

@@ -197,9 +197,4 @@ public abstract class DataTypeImpl implements DataType {
   public Element getJavaElement() {
     return this.typeDefinition;
   }
-  
-  @Override
-  public String getXmlName() {
-	  return null;
-  }
 }

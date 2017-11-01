@@ -190,7 +190,7 @@ public class ObjectTypeRenderer {
   }
 
   private static void addNamespaceXml(IndententationPrinter ip, Property p) {
-    PropertyMetadata metadata = p.getMetadata();
+    PropertyMetadata metadata = AccessorProperty.getMetadata(p);
     if (metadata == null) {
       return;
     }
@@ -199,7 +199,7 @@ public class ObjectTypeRenderer {
     String namespace = metadata.getTitle();
 
     boolean renderWrappedName = wrappedName != null && !wrappedName.isEmpty();
-    boolean renderAttribute = p.isAttribute();
+    boolean renderAttribute = AccessorProperty.isAttribute(p);
     boolean renderNamespace = namespace != null && !namespace.isEmpty();
     
     if (!renderWrappedName && !renderAttribute && !renderNamespace) {
@@ -222,7 +222,7 @@ public class ObjectTypeRenderer {
   }
 
   private static void addOptionalXml(IndententationPrinter ip, DataType datatype) {
-    String xmlName = datatype.getXmlName();
+    String xmlName = AccessorDataType.getXmlName(datatype);
     Namespace namespace = datatype.getNamespace();
     if (xmlName != null && !xmlName.isEmpty()) {
       ip.add("xml:");

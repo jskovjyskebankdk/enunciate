@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.EnumMap;
 
 import com.webcohesion.enunciate.api.datatype.BaseTypeFormat;
-
 public class BaseTypeToOpenApiType {
 
   private static final Map<BaseTypeFormat, String> baseformat2openapiformat = new EnumMap<BaseTypeFormat, String>(BaseTypeFormat.class);
