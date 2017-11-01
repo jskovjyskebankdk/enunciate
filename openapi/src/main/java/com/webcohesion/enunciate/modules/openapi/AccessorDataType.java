@@ -15,6 +15,6 @@ public class AccessorDataType {
     if (dt instanceof ComplexDataTypeImpl) {
       return ((ComplexDataTypeImpl)dt).getXmlName();
     }
-    throw new IllegalStateException("Unhandled type " + dt.getClass().getName());
+    return null;
   }
 }
