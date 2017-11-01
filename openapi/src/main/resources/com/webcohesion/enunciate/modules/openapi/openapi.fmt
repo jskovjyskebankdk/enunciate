@@ -63,6 +63,7 @@ paths:
         required: ${parameter.required}
         schema:
           ${parameter.renderDataType("          ")}
+        style: ${parameter.style}
         [/#list][#-- list parameters --]
       [/#if][#-- if operation.hasParameters --]
       [#if operation.hasEntity]

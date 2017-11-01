@@ -12,7 +12,7 @@ public class OpenApiParameterRenderer extends Typed1ArgTemplateMethod<String, St
   @SuppressWarnings("unused") private final EnunciateLogger logger;
   private final Parameter parameter;
 
-  public OpenApiParameterRenderer(EnunciateLogger logger, Parameter parameter, OpenApiParameterTypes type) {
+  public OpenApiParameterRenderer(EnunciateLogger logger, Parameter parameter) {
     super(String.class);
     this.logger = logger;
     this.parameter = parameter;
@@ -24,9 +24,7 @@ public class OpenApiParameterRenderer extends Typed1ArgTemplateMethod<String, St
 
     addOptionalEnum(ip);
     addType(ip);
-    
-    // FIXME: render entity argument
-    
+
     return ip.toString();
   }
 
