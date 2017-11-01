@@ -12,9 +12,14 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
+import com.webcohesion.enunciate.api.datatype.BaseType;
 import com.webcohesion.enunciate.api.datatype.DataType;
 import com.webcohesion.enunciate.api.datatype.DataTypeReference;
+import com.webcohesion.enunciate.api.datatype.Example;
 import com.webcohesion.enunciate.api.datatype.DataTypeReference.ContainerType;
+import com.webcohesion.enunciate.javac.javadoc.JavaDoc;
+import com.webcohesion.enunciate.metadata.DocumentationExample;
 import com.webcohesion.enunciate.api.datatype.Namespace;
 import com.webcohesion.enunciate.api.datatype.Property;
 import com.webcohesion.enunciate.api.datatype.PropertyMetadata;
@@ -24,18 +29,18 @@ import com.webcohesion.enunciate.modules.openapi.yaml.IndententationPrinter;
 public class ObjectTypeRenderer {
   private ObjectTypeRenderer() {}
   
-  public static void render(IndententationPrinter ip, DataType datatype) {
+  public static void render(IndententationPrinter ip, DataType datatype, boolean syntaxIsJson) {
     ip.pushNextLevel();
     ip.add("title: ", safeYamlString(datatype.getLabel()));
     addOptionalSupertypeHeader(ip, datatype);
 
     ip.add("type: ", getBaseType(datatype));
     addOptionalRequired(ip, datatype);
-    addOptionalProperties(ip, datatype);
+    addOptionalProperties(ip, datatype, syntaxIsJson);
     addOptionalEnum(ip, datatype);
     addOptionalXml(ip, datatype);
     
-    // TODO: example
+    addOptionalExample(ip, datatype, syntaxIsJson);
     
     ip.popLevel();
   }
@@ -116,7 +121,7 @@ public class ObjectTypeRenderer {
     ip.prevLevel();
   }
 
-  private static void addOptionalProperties(IndententationPrinter ip, DataType datatype) {
+  private static void addOptionalProperties(IndententationPrinter ip, DataType datatype, boolean syntaxIsJson) {
     List<? extends Property> properties = datatype.getProperties();
     if (properties == null || properties.isEmpty()) {
       return;
@@ -125,19 +130,18 @@ public class ObjectTypeRenderer {
     ip.add("properties:");
     ip.nextLevel();
     for (Property p : properties) {
-      addProperty(ip, datatype, p);
+      addProperty(ip, datatype, p, syntaxIsJson);
     }
     ip.prevLevel();
   }
 
-  private static void addProperty(IndententationPrinter ip, DataType datatype, Property p) {
+  private static void addProperty(IndententationPrinter ip, DataType datatype, Property p, boolean syntaxIsJson) {
     ip.add(p.getName(), ":");
     ip.nextLevel();
     if (datatype.getPropertyMetadata().containsKey("namespaceInfo")) {
       // TODO: would be nicer to have it on the property
       addNamespaceXml(ip, p);
     }
-    // TODO: example:
     
     addConstraints(ip, p);
     if (p.isReadOnly()) {
@@ -145,6 +149,8 @@ public class ObjectTypeRenderer {
     }
     
     DataTypeReferenceRenderer.render(ip, p.getDataType(), p.getDescription());
+    
+    addOptionalPropertyExample(ip, p, syntaxIsJson);
     
     ip.prevLevel();
   }
@@ -236,5 +242,76 @@ public class ObjectTypeRenderer {
       }
       ip.prevLevel();
     }
+  }
+  
+
+  private static void addOptionalExample(IndententationPrinter ip, DataType datatype, boolean syntaxIsJson) {
+    if (!syntaxIsJson) {
+      return;
+    }
+
+    renderExample(ip, getExampleFromType(datatype, datatype.getBaseType(), null));
+  }
+
+  private static void addOptionalPropertyExample(IndententationPrinter ip, Property property, boolean syntaxIsJson) {
+    if (!syntaxIsJson) {
+      return;
+    }
+        
+    BaseType baseType = property.getDataType() != null ? property.getDataType().getBaseType() : null;
+    String specifiedExample = findSpecifiedExample(property);
+    renderExample(ip, getExampleFromType(null, baseType, specifiedExample));
+  }
+  
+  private static void renderExample(IndententationPrinter ip, String example) {
+    if (example != null && !example.isEmpty()) {
+      ip.add("example: ", safeYamlString(example));
+    }
+  }
+  
+  private static String getExampleFromType(DataType dataType, BaseType baseType, String specifiedExample) {
+    if (baseType != null) {
+      switch (baseType) {
+        case object:
+          if (dataType != null) {
+            if (dataType.getBaseType() == BaseType.object) {
+              Example example = dataType.getExample();
+              if (example != null) {
+                return example.getBody();
+              }
+            }
+          }
+        default:
+          return specifiedExample;
+      }
+    }
+    return null;
+  }
+  
+
+  private static String findSpecifiedExample(Property property) {
+    String example = null;
+
+    JavaDoc.JavaDocTagList tags = property.getJavaDoc().get("documentationExample");
+    if (tags != null && !tags.isEmpty()) {
+      String tag = tags.get(0).trim();
+      example = tag.isEmpty() ? null : tag;
+    }
+
+    DocumentationExample documentationExample = property.getAnnotation(DocumentationExample.class);
+    if (documentationExample != null) {
+      if (documentationExample.exclude()) {
+        return null;
+      }
+
+      example = documentationExample.value();
+      example = "##default".equals(example) ? null : example;
+    }
+
+    if (example != null && (property.getDataType() == null || property.getDataType().getBaseType() == BaseType.string)) {
+      example = "\"" + new String(new JsonStringEncoder().quoteAsString(example)) + "\"";
+    }
+
+    return example;
   }
 }

@@ -1,4 +1,4 @@
-package com.webcohesion.enunciate.modules.openapi;
+package com.webcohesion.enunciate.modules.openapi.paths;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -6,13 +6,15 @@ import java.util.Set;
 import com.webcohesion.enunciate.EnunciateLogger;
 import com.webcohesion.enunciate.api.resources.Parameter;
 import com.webcohesion.enunciate.modules.freemarker.Typed1ArgTemplateMethod;
+import com.webcohesion.enunciate.modules.openapi.DataTypeReferenceRenderer;
+import com.webcohesion.enunciate.modules.openapi.ObjectTypeRenderer;
 import com.webcohesion.enunciate.modules.openapi.yaml.IndententationPrinter;
 
-public class OpenApiParameterRenderer extends Typed1ArgTemplateMethod<String, String> {
+public class ParameterRenderer extends Typed1ArgTemplateMethod<String, String> {
   @SuppressWarnings("unused") private final EnunciateLogger logger;
   private final Parameter parameter;
 
-  public OpenApiParameterRenderer(EnunciateLogger logger, Parameter parameter) {
+  public ParameterRenderer(EnunciateLogger logger, Parameter parameter) {
     super(String.class);
     this.logger = logger;
     this.parameter = parameter;

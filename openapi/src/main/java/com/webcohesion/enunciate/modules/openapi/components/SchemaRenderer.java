@@ -16,10 +16,13 @@ public class SchemaRenderer extends Typed1ArgTemplateMethod<String, String> {
   @SuppressWarnings("unused") private final EnunciateLogger logger;
   private final DataType datatype;
 
-  public SchemaRenderer(EnunciateLogger logger, DataType datatype) {
+  private boolean syntaxIsJson;
+
+  public SchemaRenderer(EnunciateLogger logger, DataType datatype, boolean syntaxIsJson) {
     super(String.class);
     this.logger = logger;
     this.datatype = datatype;
+    this.syntaxIsJson = syntaxIsJson;
   }
 
   @Override
@@ -31,7 +34,7 @@ public class SchemaRenderer extends Typed1ArgTemplateMethod<String, String> {
   
   private void renderLines(IndententationPrinter ip) {
     ip.add(getRefId() + ":");
-    ObjectTypeRenderer.render(ip, datatype);
+    ObjectTypeRenderer.render(ip, datatype, syntaxIsJson);
   }
 
   private String getRefId() {

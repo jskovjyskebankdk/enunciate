@@ -181,7 +181,8 @@ public class OpenApiModule extends BasicGeneratingModule implements ApiFeaturePr
     }
 
     @Override
-    public void writeTo(File srcDir) throws IOException {
+    public void writeTo(File srcDirIn) throws IOException {
+      File srcDir = srcDirIn;
       srcDir.mkdirs();
       String subdir = getDocsSubdir();
       if (subdir != null) {
@@ -195,19 +196,8 @@ public class OpenApiModule extends BasicGeneratingModule implements ApiFeaturePr
       
       Set<Syntax> syntaxes = apiRegistry.getSyntaxes(apiRegistrationContext);
       model.put("components", new Components(logger, syntaxes));
-      
-      // REWORK BELOW
-      model.put("apis", this.resourceApis);
-      model.put("syntaxes", apiRegistry.getSyntaxes(apiRegistrationContext));
       model.put("file", new FileDirective(srcDir, logger));
-      model.put("uniqueMediaTypesFor", new UniqueMediaTypesForMethod());
-      model.put("jsonExamplesFor", new JsonExamplesForMethod());
-      model.put("jsonExampleFor", new JsonExampleForMethod());
-      model.put("findBestDataType", new FindBestDataTypeMethod());
-      model.put("host", getHost());
-      model.put("schemes", getSchemes());
-      model.put("basePath", getBasePath());
-
+      
       buildBase(srcDir);
       try {
         processTemplate(getTemplateURL(), model);
@@ -259,33 +249,6 @@ public class OpenApiModule extends BasicGeneratingModule implements ApiFeaturePr
     }
 
     return host;
-  }
-
-  protected String[] getSchemes() {
-    return this.config.getStringArray("scheme");
-  }
-
-  protected String getBasePath() {
-    String basePath = this.config.getString("[@basePath]", null);
-
-    if (basePath == null) {
-      String root = enunciate.getConfiguration().getApplicationRoot();
-      if (root != null) {
-        try {
-          URI uri = URI.create(root);
-          basePath = uri.getPath();
-        }
-        catch (IllegalArgumentException e) {
-          basePath = null;
-        }
-      }
-
-      while (basePath != null && basePath.endsWith("/")) {
-        basePath = basePath.substring(0, basePath.length() - 1);
-      }
-    }
-
-    return basePath;
   }
 
   /**

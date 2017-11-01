@@ -9,8 +9,12 @@ import java.util.Collections;
 import java.util.List;
 
 import com.webcohesion.enunciate.EnunciateLogger;
+import com.webcohesion.enunciate.api.datatype.BaseType;
+import com.webcohesion.enunciate.api.datatype.DataType;
 import com.webcohesion.enunciate.api.datatype.DataTypeReference;
+import com.webcohesion.enunciate.api.datatype.Example;
 import com.webcohesion.enunciate.api.resources.Entity;
+import com.webcohesion.enunciate.api.resources.MediaTypeDescriptor;
 import com.webcohesion.enunciate.api.resources.Method;
 import com.webcohesion.enunciate.api.resources.Parameter;
 import com.webcohesion.enunciate.api.resources.ResourceGroup;
@@ -27,12 +31,12 @@ public class Operation {
   private final Method method;
   private final List<Param> parameters = new ArrayList<>();
   private final List<Response> responses = new ArrayList<>();
-  private EntityRenderer entityRenderer;
+  private RequestEntityRenderer entityRenderer;
 
   public Operation(EnunciateLogger logger, Method method, ResourceGroup resourceGroup) {
     this.method = method;
     this.resourceGroup = resourceGroup;
-    entityRenderer = new EntityRenderer(method);
+    entityRenderer = new RequestEntityRenderer(method);
     
     for (Parameter parameter : method.getParameters()) {
       parameters.add(new Param(logger, parameter));
@@ -83,7 +87,7 @@ public class Operation {
     return safeYamlString(description == null ? "" : description);
   }
   
-  public EntityRenderer getRenderEntity() {
+  public RequestEntityRenderer getRenderEntity() {
     return entityRenderer;
   }
   
@@ -108,7 +112,10 @@ public class Operation {
         List<Parameter> headers = successResponse ? successHeaders : Collections.<Parameter>emptyList();
         
         String mediaType = mediaAndType == null ? DUMMY_SUCCESS_MEDIA_TYPE : mediaAndType.media.getMediaType();
-        responses.add(new Response(logger, code.getCode(), mediaType, dataType, headers, code.getCondition()));
+
+        String example = getExampleForMediaType(responseEntity, mediaType);
+        
+        responses.add(new Response(logger, code.getCode(), mediaType, dataType, headers, code.getCondition(), example));
         successResponseFound |= successResponse;
       }
     }
@@ -116,7 +123,29 @@ public class Operation {
     if (!successResponseFound) {
       int code = DEFAULT_201_METHODS.contains(method.getHttpMethod().toUpperCase()) ? 201 : DEFAULT_204_METHODS.contains(method.getHttpMethod().toUpperCase()) ? 204 : 200;
       String description = responseEntity != null ? responseEntity.getDescription() : "Success";
-      responses.add(new Response(logger, code, DUMMY_SUCCESS_MEDIA_TYPE, successDataType, successHeaders, description));
+      String example = null;
+      responses.add(new Response(logger, code, DUMMY_SUCCESS_MEDIA_TYPE, successDataType, successHeaders, description, example));
     }
+  }
+  
+  private String getExampleForMediaType(Entity entity, String mediaType) {
+    List<? extends MediaTypeDescriptor> mts = entity.getMediaTypes();
+    if (mts != null) {
+      for (MediaTypeDescriptor mt : mts) {
+        if (mediaType.equals(mt.getMediaType())) {
+          DataTypeReference dataType = mt.getDataType();
+          if (dataType != null && dataType.getBaseType() == BaseType.object) {
+            DataType value = dataType.getValue();
+            if (value != null) {
+              Example example = value.getExample();
+              if (example != null) {
+                return example.getBody();
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 }

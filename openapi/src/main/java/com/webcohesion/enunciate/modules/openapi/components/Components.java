@@ -14,9 +14,10 @@ public class Components {
 
   public Components(EnunciateLogger logger, Set<Syntax> syntaxes) {
     for (Syntax syntax: syntaxes) {
+      boolean syntaxIsJson = syntax.isAssignableToMediaType("application/json");
       for (Namespace namespace: syntax.getNamespaces()) {
         for (DataType datatype: namespace.getTypes()) {
-          schemas.add(new Schema(logger, datatype));
+          schemas.add(new Schema(logger, datatype, syntaxIsJson));
         }
       }
     }

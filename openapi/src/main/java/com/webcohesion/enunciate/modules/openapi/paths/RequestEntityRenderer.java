@@ -9,12 +9,12 @@ import com.webcohesion.enunciate.modules.openapi.FindBestDataTypeMethod;
 import com.webcohesion.enunciate.modules.openapi.FindBestDataTypeMethod.MediaAndType;
 import com.webcohesion.enunciate.modules.openapi.yaml.IndententationPrinter;
 
-public class EntityRenderer extends Typed1ArgTemplateMethod<String, String> {
+public class RequestEntityRenderer extends Typed1ArgTemplateMethod<String, String> {
   private MediaAndType mediaAndType;
   private boolean hasMedia;
   private String mediaWithFallback;
 
-  public EntityRenderer(Method method) {
+  public RequestEntityRenderer(Method method) {
     super(String.class);
     
     mediaAndType = FindBestDataTypeMethod.findBestMediaAndType(method.getRequestEntity());
@@ -35,8 +35,8 @@ public class EntityRenderer extends Typed1ArgTemplateMethod<String, String> {
       } else {
         DataTypeReferenceRenderer.renderObsoletedFileFormat(ip);
       }
-      
       ip.prevLevel();
+      
       ip.prevLevel();
       return ip.toString();
   }

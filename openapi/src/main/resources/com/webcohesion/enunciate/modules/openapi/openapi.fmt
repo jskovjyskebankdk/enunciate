@@ -82,6 +82,10 @@ paths:
             ${response.mediaType}:
               schema:
                 ${response.renderDataType("                ")}
+              [#if response.hasExample]
+              example:
+                ${response.example}
+              [/#if]
           [/#if][#-- response.hasData --]
 [/#list] [#-- list responses --]
             [/#list][#-- list operations --]

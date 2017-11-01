@@ -7,7 +7,6 @@ import java.util.Map;
 
 import com.webcohesion.enunciate.EnunciateLogger;
 import com.webcohesion.enunciate.api.resources.Parameter;
-import com.webcohesion.enunciate.modules.openapi.OpenApiParameterRenderer;
 import com.webcohesion.enunciate.modules.openapi.yaml.YamlHelper;
 
 public class Param {
@@ -19,7 +18,7 @@ public class Param {
   private static final String HEADER = "header";
   private static final String COOKIE = "cookie";
   private final Parameter parameter;
-  private final OpenApiParameterRenderer renderer;
+  private final ParameterRenderer renderer;
   private final boolean required;
   private String paramPassedIn;
   private String paramStyle;
@@ -45,7 +44,7 @@ public class Param {
   public Param(EnunciateLogger logger, Parameter parameter) {
     this.parameter = parameter;
     
-    renderer = new OpenApiParameterRenderer(logger, parameter);
+    renderer = new ParameterRenderer(logger, parameter);
     String typeLabel = parameter.getTypeLabel();
     paramPassedIn = typeLabel2in.get(typeLabel);
     paramStyle = typeLabel2style.get(typeLabel);
@@ -76,7 +75,7 @@ public class Param {
     return Boolean.toString(required);
   }
   
-  public OpenApiParameterRenderer getRenderDataType() {
+  public ParameterRenderer getRenderDataType() {
     return renderer;
   }
   
