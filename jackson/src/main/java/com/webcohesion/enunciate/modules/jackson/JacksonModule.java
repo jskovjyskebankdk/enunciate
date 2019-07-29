@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.webcohesion.enunciate.CompletionFailureException;
 import com.webcohesion.enunciate.EnunciateContext;
 import com.webcohesion.enunciate.api.ApiRegistry;
 import com.webcohesion.enunciate.javac.decorations.type.DecoratedTypeMirror;
@@ -58,6 +59,10 @@ public class JacksonModule extends BasicProviderModule implements TypeDetectingM
 
   public boolean isHonorJaxbAnnotations() {
     return this.config.getBoolean("[@honorJaxb]", this.jaxbSupportDetected);
+  }
+  
+  public boolean isHonorGsonAnnotations() {
+    return this.config.getBoolean("[@honorGson]", false);
   }
 
   public boolean isCollapseTypeHierarchy() {
@@ -119,7 +124,7 @@ public class JacksonModule extends BasicProviderModule implements TypeDetectingM
       }
     }
 
-    this.jacksonContext = new EnunciateJacksonContext(context, isHonorJaxbAnnotations(), getDateFormat(), isCollapseTypeHierarchy(), getMixins(), getExternalExamples(), getDefaultVisibility(), isDisableExamples(), isWrapRootValue(), getPropertyNamingStrategy(), isPropertiesAlphabetical());
+    this.jacksonContext = new EnunciateJacksonContext(context, isHonorJaxbAnnotations(), isHonorGsonAnnotations() ,getDateFormat(), isCollapseTypeHierarchy(), getMixins(), getExternalExamples(), getDefaultVisibility(), isDisableExamples(), isWrapRootValue(), getPropertyNamingStrategy(), isPropertiesAlphabetical());
     DataTypeDetectionStrategy detectionStrategy = getDataTypeDetectionStrategy();
     switch (detectionStrategy) {
       case aggressive:
@@ -202,16 +207,27 @@ public class JacksonModule extends BasicProviderModule implements TypeDetectingM
   }
 
   protected void addPotentialJacksonElement(Element declaration, LinkedList<Element> contextStack) {
-    if (declaration instanceof TypeElement) {
-      if (!this.jacksonContext.isKnownTypeDefinition((TypeElement) declaration) && isExplicitTypeDefinition(declaration, this.jacksonContext.isHonorJaxb())) {
-        this.jacksonContext.add(this.jacksonContext.createTypeDefinition((TypeElement) declaration), contextStack);
+    try {
+      if (declaration instanceof TypeElement) {
+        if (!this.jacksonContext.isKnownTypeDefinition((TypeElement) declaration) && isExplicitTypeDefinition(declaration, this.jacksonContext.isHonorJaxb())) {
+          this.jacksonContext.add(this.jacksonContext.createTypeDefinition((TypeElement) declaration), contextStack);
+        }
       }
+    }
+    catch (RuntimeException e) {
+      if (e.getClass().getName().endsWith("CompletionFailure")) {
+        contextStack = new LinkedList<>(contextStack);
+        contextStack.push(declaration);
+        throw new CompletionFailureException(contextStack, e);
+      }
+
+      throw e;
     }
   }
 
   protected boolean isExplicitTypeDefinition(Element declaration, boolean honorJaxb) {
-    if (declaration.getKind() != ElementKind.CLASS && declaration.getKind() != ElementKind.ENUM) {
-      debug("%s isn't a potential Jackson type because it's not a class or an enum.", declaration);
+    if (declaration.getKind() != ElementKind.CLASS && declaration.getKind() != ElementKind.ENUM && declaration.getKind() != ElementKind.INTERFACE) {
+      debug("%s isn't a potential Jackson type because it's not a class or an enum or interface.", declaration);
       return false;
     }
 

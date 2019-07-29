@@ -18,6 +18,7 @@ package com.webcohesion.enunciate.modules.jaxws.model;
 import com.webcohesion.enunciate.EnunciateException;
 import com.webcohesion.enunciate.javac.decorations.element.DecoratedVariableElement;
 import com.webcohesion.enunciate.javac.decorations.type.DecoratedTypeMirror;
+import com.webcohesion.enunciate.javac.decorations.type.TypeVariableContext;
 import com.webcohesion.enunciate.metadata.ClientName;
 import com.webcohesion.enunciate.modules.jaxb.model.ImplicitChildElement;
 import com.webcohesion.enunciate.modules.jaxb.model.adapters.Adaptable;
@@ -28,6 +29,7 @@ import com.webcohesion.enunciate.modules.jaxb.model.util.MapType;
 import com.webcohesion.enunciate.modules.jaxws.EnunciateJaxwsContext;
 import com.webcohesion.enunciate.modules.jaxws.model.util.JAXWSUtil;
 import com.webcohesion.enunciate.util.HasClientConvertibleType;
+import com.webcohesion.enunciate.util.BeanValidationUtils;
 
 import javax.jws.soap.SOAPBinding;
 import javax.lang.model.element.Element;
@@ -39,6 +41,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.xml.bind.annotation.XmlAttachmentRef;
 import javax.xml.bind.annotation.XmlMimeType;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Holder;
 import java.util.ArrayList;
@@ -57,8 +60,9 @@ public class WebParam extends DecoratedVariableElement implements Adaptable, Web
   private final boolean useSourceParameterNames;
   private final int parameterIndex;
   private final EnunciateJaxwsContext context;
+  private final TypeMirror webParamType;
 
-  protected WebParam(VariableElement delegate, WebMethod method, int parameterIndex, EnunciateJaxwsContext context) {
+  protected WebParam(VariableElement delegate, WebMethod method, int parameterIndex, EnunciateJaxwsContext context, TypeVariableContext variableContext) {
     super(delegate, context.getContext().getProcessingEnvironment());
     this.context = context;
 
@@ -71,6 +75,13 @@ public class WebParam extends DecoratedVariableElement implements Adaptable, Web
     this.annotation = delegate.getAnnotation(javax.jws.WebParam.class);
     this.adapterType = JAXWSUtil.findAdapterType(this, context.getJaxbContext());
     this.useSourceParameterNames = context.isUseSourceParameterNames();
+
+    TypeMirror type = variableContext.resolveTypeVariables(super.asType(), this.env);
+    MapType mapType = MapType.findMapType(type, this.context.getJaxbContext());
+    if (mapType != null) {
+      type = mapType;
+    }
+    this.webParamType = type;
   }
 
   /**
@@ -252,12 +263,7 @@ public class WebParam extends DecoratedVariableElement implements Adaptable, Web
 
   @Override
   public TypeMirror getType() {
-    TypeMirror type = super.asType();
-    MapType mapType = MapType.findMapType(type, this.context.getJaxbContext());
-    if (mapType != null) {
-      type = mapType;
-    }
-    return type;
+    return this.webParamType;
   }
 
   /**
@@ -299,7 +305,12 @@ public class WebParam extends DecoratedVariableElement implements Adaptable, Web
    */
   public int getMinOccurs() {
     DecoratedTypeMirror paramType = (DecoratedTypeMirror) getType();
-    return paramType.isPrimitive() ? 1 : 0;
+    XmlElement xmlElement = delegate.getAnnotation(XmlElement.class);
+    boolean required = xmlElement!=null ? xmlElement.required() : false;
+    return (paramType.isPrimitive() ||
+            required ||
+            BeanValidationUtils.isNotNull(this)
+           ) ? 1 : 0;
   }
 
   /**

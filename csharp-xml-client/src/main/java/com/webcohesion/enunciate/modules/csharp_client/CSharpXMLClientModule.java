@@ -693,7 +693,7 @@ public class CSharpXMLClientModule extends BasicGeneratingModule implements ApiF
    */
   public Method findExampleResourceMethod() {
     Method example = null;
-    List<ResourceGroup> resourceGroups = this.jaxrsModule.getJaxrsContext().getResourceGroups(new DefaultRegistrationContext());
+    List<ResourceGroup> resourceGroups = this.jaxrsModule.getJaxrsContext().getResourceGroups(new DefaultRegistrationContext(context));
     for (ResourceGroup resourceGroup : resourceGroups) {
       List<Resource> resources = resourceGroup.getResources();
       for (Resource resource : resources) {
@@ -743,7 +743,7 @@ public class CSharpXMLClientModule extends BasicGeneratingModule implements ApiF
    * @return The name of the bundle file.
    */
   protected String getBundleFileName() {
-    return this.config.getString("[@bundleFileName]", getSlug() + "-dotnet.zip");
+    return this.config.getString("[@bundleFileName]", getSlug() + "-" + getName() + ".zip");
   }
 
   /**

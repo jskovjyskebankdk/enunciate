@@ -15,6 +15,7 @@
  */
 package com.webcohesion.enunciate.modules.jackson1;
 
+import com.webcohesion.enunciate.CompletionFailureException;
 import com.webcohesion.enunciate.EnunciateContext;
 import com.webcohesion.enunciate.EnunciateException;
 import com.webcohesion.enunciate.javac.decorations.element.PropertyElement;
@@ -126,7 +127,7 @@ public class EnunciateJackson1Context extends EnunciateModuleContext {
     if (type instanceof DeclaredType && !type.isCollection() && MapType.findMapType(type, this) == null) {
       if (!((DeclaredType) type).getTypeArguments().isEmpty()) {
         //if type arguments apply, create a new "synthetic" declared type that captures the type arguments.
-        type = new ParameterizedJackson1DeclaredType((DeclaredType) type, getContext().getProcessingEnvironment());
+        type = new ParameterizedJackson1DeclaredType((DeclaredType) type, getContext());
       }
       else if (type.isInterface()) {
         //if it's an interface, create a "synthetic" type that pretends like it's an abstract class.
@@ -628,6 +629,15 @@ public class EnunciateJackson1Context extends EnunciateModuleContext {
               typeArg.accept(this, context);
             }
           }
+        }
+        catch (RuntimeException e) {
+          if (e.getClass().getName().endsWith("CompletionFailure")) {
+            LinkedList<Element> referenceStack = new LinkedList<>(context.referenceStack);
+            referenceStack.push(declaration);
+            throw new CompletionFailureException(referenceStack, e);
+          }
+
+          throw e;
         }
         finally {
           context.recursionStack.pop();

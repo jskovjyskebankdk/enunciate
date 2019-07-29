@@ -37,6 +37,7 @@ import com.webcohesion.enunciate.modules.jaxrs.model.util.JaxrsUtil;
 import com.webcohesion.enunciate.modules.jaxrs.model.util.RSParamDocComment;
 import com.webcohesion.enunciate.modules.jaxrs.model.util.ReturnWrappedDocComment;
 import com.webcohesion.enunciate.util.AnnotationUtils;
+import com.webcohesion.enunciate.util.IgnoreUtils;
 import com.webcohesion.enunciate.util.TypeHintUtils;
 import io.swagger.annotations.*;
 
@@ -44,6 +45,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypeException;
+import javax.lang.model.type.TypeKind;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.util.*;
@@ -121,6 +123,10 @@ public class ResourceMethod extends DecoratedExecutableElement implements HasFac
       resourceParameters = new TreeSet<ResourceParameter>();
       //if we're not overriding the signature, assume we use the real method signature.
       for (VariableElement parameterDeclaration : getParameters()) {
+        if (IgnoreUtils.isIgnored(parameterDeclaration)) {
+          continue;
+        }
+
         if (ResourceParameter.isResourceParameter(parameterDeclaration, context)) {
           resourceParameters.add(new ResourceParameter(parameterDeclaration, this));
         }
@@ -401,10 +407,14 @@ public class ResourceMethod extends DecoratedExecutableElement implements HasFac
 
       TypeElement type = env.getElementUtils().getTypeElement(fqn);
       if (type != null) {
-        returnType = (DecoratedTypeMirror) TypeMirrorDecorator.decorate(env.getTypeUtils().getDeclaredType(type), this.env);
+        if (!array && isNoContentType(fqn)) {
+          returnType = (DecoratedTypeMirror) this.env.getTypeUtils().getNoType(TypeKind.VOID);
+        } else {
+          returnType = (DecoratedTypeMirror) TypeMirrorDecorator.decorate(env.getTypeUtils().getDeclaredType(type), this.env);
 
-        if (array) {
-          returnType = (DecoratedTypeMirror) TypeMirrorDecorator.decorate(env.getTypeUtils().getArrayType(returnType), this.env);
+          if (array) {
+            returnType = (DecoratedTypeMirror) TypeMirrorDecorator.decorate(env.getTypeUtils().getArrayType(returnType), this.env);
+          }
         }
 
         returnType.setDeferredDocComment(new ReturnWrappedDocComment(this));
@@ -416,7 +426,14 @@ public class ResourceMethod extends DecoratedExecutableElement implements HasFac
 
     return returnType;
   }
-
+  
+  //the following name denotes 'no content' semantics:
+  //- com.webcohesion.enunciate.metadata.rs.TypeHint.NO_CONTENT
+  private boolean isNoContentType(String fqn) {
+    String noContentClassName = TypeHint.NO_CONTENT.class.getName();
+    return fqn.equals(noContentClassName.replace('$', '.'));
+  }
+  
   public Set<ResourceParameter> loadExtraParameters(Resource parent, EnunciateJaxrsContext context) {
     Set<ResourceParameter> extraParameters = new TreeSet<ResourceParameter>();
     JavaDoc localDoc = new JavaDoc(getDocComment(), null, null, this.env);

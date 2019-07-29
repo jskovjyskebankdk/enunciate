@@ -18,7 +18,7 @@
 --]
 [#--template for the client-side complex type.--]
 [#macro createPhpXmlObject targetVariable currentClass indent]
-    [#if currentClass == "String" || currentClass == "Integer" || currentClass == "Boolean" || currentClass == "Array"]
+    [#if currentClass == "String" || currentClass == "Integer" || currentClass == "Double" || currentClass == "Boolean" || currentClass == "Array"]
 ${indent}${targetVariable} = '';
 ${indent}while ($xml->read() && $xml->hasValue) {
 ${indent}    ${targetVariable} = ${targetVariable} . $xml->value;
@@ -30,11 +30,26 @@ ${indent}${targetVariable} = new \${currentClass}($xml);
     [/#if]
 [/#macro]
 [#macro toPhpXmlInstance currentIdentifier currentClass indent]
-    [#if currentClass == "String" || currentClass == "Integer" || currentClass == "Boolean" || currentClass == "Array"]
+    [#if currentClass == "String" || currentClass == "Integer" || currentClass == "Double" || currentClass == "Boolean" || currentClass == "Array"]
 ${indent}$writer->text(${currentIdentifier});
     [#else]
 ${indent}${currentIdentifier}->writeXmlContents($writer);
     [/#if]
+[/#macro]
+[#macro toPhpXmlType currentIdentifier currentClass indent]
+[#switch currentClass]
+    [#case "Boolean"]
+${indent}${currentIdentifier} = filter_var($child, FILTER_VALIDATE_BOOLEAN);
+    [#break]
+    [#case "Double"]
+${indent}${currentIdentifier} = floatval($child);
+    [#break]   
+    [#case "Integer"]
+${indent}${currentIdentifier} = intval($child);
+    [#break]        
+    [#default]
+${indent}${currentIdentifier} = $child;
+[/#switch]
 [/#macro]
 [#macro writeComplexType type]
 [#-- @ftlvariable name="type" type="com.webcohesion.enunciate.modules.jaxb.model.TypeDefinition" --]
@@ -229,6 +244,7 @@ class ${simpleNameFor(type)}[#if !type.baseObject] extends \${classnameFor(type.
                     //no-op: skip any insignificant whitespace, comments, etc.
                 }
                 else if (!$xml->isEmptyElement && !$this->setKnownChildElement($xml)) {
+                    $d = $xml->depth;
                     $n = $xml->localName;
                     $ns = $xml->namespaceURI;
       [#if type.anyElement??]
@@ -248,7 +264,7 @@ class ${simpleNameFor(type)}[#if !type.baseObject] extends \${classnameFor(type.
                     $dom = $e;
 
                     //create any child elements...
-                    while ($xml->read() && $xml->nodeType != \XMLReader::END_ELEMENT && $xml->localName != $n && $xml->namespaceURI != $ns) {
+                    while ($xml->read() && !$this->hasSameValue($d, $xml->depth, false) && !$this->hasSameValue($n, $xml->localName) && !$this->hasSameValue($ns, $xml->namespaceURI)) {
                         if ($xml->nodeType == \XMLReader::ELEMENT) {
                             $e = $nodeFactory->createElementNS($xml->namespaceURI, $xml->localName);
                             $dom->appendChild($e);
@@ -271,9 +287,7 @@ class ${simpleNameFor(type)}[#if !type.baseObject] extends \${classnameFor(type.
                     array_push($this->${type.anyElement.clientSimpleName}, $nodeFactory);
       [#else]
                     //skip the unknown element
-                    while ($xml->nodeType != \XMLReader::END_ELEMENT && $xml->localName != $n && $xml->namespaceURI != $ns) {
-                        $xml->read();
-                    }
+                    while ($xml->read() && !$this->hasSameValue($d, $xml->depth, false) && !$this->hasSameValue($n, $xml->localName) && !$this->hasSameValue($ns, $xml->namespaceURI));
       [/#if]
                 }
                 $xml->read(); //advance the reader.
@@ -283,6 +297,25 @@ class ${simpleNameFor(type)}[#if !type.baseObject] extends \${classnameFor(type.
     }
 
   [/#if]
+
+    /**
+     * Evaluates if two values are the same using strict comparison.
+     * 
+     * @param mixed $n1 the first value
+     * @param mixed $n2 the second value
+     * @param boolean $evaluateTwoEmptyValuesToFalse treat two empty values (as
+     * deemed empty by <code>empty()</code> as not equal. This is useful when
+     * comparing text nodes (which does not have a name) or empty namespace.
+     * @return boolean a <code>boolean</code> indicating if the two values are
+     * are the same using the strict '===' operator.
+     */
+    private function hasSameValue($n1, $n2, $evaluateTwoEmptyValuesToFalse = true) {
+      if ($evaluateTwoEmptyValuesToFalse && empty($n1) && empty($n2)) {
+        return false;
+      }
+    
+      return $n1 === $n2;
+    }
 
     /**
      * Sets a known child element of ${simpleNameFor(type)} from an XML reader.
@@ -326,15 +359,15 @@ class ${simpleNameFor(type)}[#if !type.baseObject] extends \${classnameFor(type.
             }
             array_push($this->${element.clientSimpleName}, $child);
             [#else]
-            $this->${element.clientSimpleName} = $child;
+[@toPhpXmlType '$this->${element.clientSimpleName}' '${classnameFor(element)}' '            '/]
             [/#if]
             $happened = true;
         }
             [#assign writeElse=true/]
           [/#list]
           [#if element.wrapped]
-                $xml->read();
-            }
+        $xml->read();
+        }
             $happened = true;
         }
           [/#if]

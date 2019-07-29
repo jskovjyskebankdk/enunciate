@@ -358,7 +358,7 @@ public class PHPXMLClientModule extends BasicGeneratingModule implements ApiFeat
    */
   public Method findExampleResourceMethod() {
     Method example = null;
-    List<ResourceGroup> resourceGroups = this.jaxrsModule.getJaxrsContext().getResourceGroups(new DefaultRegistrationContext());
+    List<ResourceGroup> resourceGroups = this.jaxrsModule.getJaxrsContext().getResourceGroups(new DefaultRegistrationContext(context));
     for (ResourceGroup resourceGroup : resourceGroups) {
       List<Resource> resources = resourceGroup.getResources();
       for (Resource resource : resources) {
@@ -427,7 +427,7 @@ public class PHPXMLClientModule extends BasicGeneratingModule implements ApiFeat
    * @return The label for the PHP API.
    */
   public String getSlug() {
-    return this.config.getString("[@slug]", this.enunciate.getConfiguration().getSlug());
+    return this.config.getString("[@slug]", this.enunciate.getConfiguration().getSlug() + "-" + getName());
   }
 
   /**
